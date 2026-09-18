@@ -43,11 +43,11 @@ class ComfyTrainingNodes(unittest.TestCase):
         self.assertEqual(result[0], "audio")
         self.assertEqual(run.call_args.args[1]["style_model_asset_id"], self.ident)
         self.assertEqual(run.call_args.args[1]["style_model_scale"], 0.4)
-        with self.assertRaisesRegex(ValueError, "只支持直接生成"):
+        with self.assertRaisesRegex(ValueError, "only supports direct generation"):
             self.nodes.YuE2GenerateSong().generate(
                 self.model, "style", "lyrics", "full", 1, 1, 1,
                 trained_style_model={"asset_id": self.ident})
-        with self.assertRaisesRegex(ValueError, "尚未产生歌曲风格模型"):
+        with self.assertRaisesRegex(ValueError, "has not produced a song style model"):
             self.nodes.YuE2GenerateSong().generate(
                 self.model, "style", "lyrics", "off", 1, 1, 1,
                 trained_style_model={"asset_id": ""})
@@ -60,7 +60,7 @@ class ComfyTrainingNodes(unittest.TestCase):
              patch.object(self.nodes.client, "request", return_value={"config": {}}), \
              patch.object(self.nodes.client, "run", side_effect=[prepared, trained]) as run:
             handle, _ = self.nodes.YuE2TrainStyle().train(
-                f"训练 [{self.ident}]", "预处理并训练", True)
+                f"训练 [{self.ident}]", "Preprocess and train", True)
         self.assertEqual(handle["asset_id"], self.ident)
         self.assertEqual([call.args[0] for call in run.call_args_list], ["yue2_prepare", "yue2_train"])
 
