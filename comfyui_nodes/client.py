@@ -23,7 +23,7 @@ def find_root() -> Path:
     for local in (node_root, node_root.parent):
         if (local / "app" / "yue2_app").is_dir():
             return local
-    raise FileNotFoundError("找不到 YuE2 节点目录，请设置 YUE2_HOME")
+    raise FileNotFoundError("Cannot find the YuE2 node directory; set YUE2_HOME")
 
 
 def request(path: str, method="GET", data=None, timeout=30):
@@ -43,22 +43,22 @@ def request(path: str, method="GET", data=None, timeout=30):
 
 def validate_health(health: dict) -> dict:
     if not isinstance(health, dict) or health.get("ok") is not True:
-        raise RuntimeError(f"{SERVICE} 不是可用的 YuE2 服务")
+        raise RuntimeError(f"{SERVICE} is not a valid YuE2 service")
     if health.get("version") != __version__:
         raise RuntimeError(
-            f"{SERVICE} 的 YuE2 服务版本为 {health.get('version')!r}，当前节点版本为 {__version__}；"
-            "请先运行 stop_service.bat，再重试"
+            f"YuE2 service version at {SERVICE} is {health.get('version')!r}, but the node version is {__version__}; "
+            "run stop_service.bat first, then retry"
         )
     if not SERVICE_CONFIGURED:
         expected = find_root().resolve()
         try:
             actual = Path(str(health["root"])).resolve()
         except (KeyError, OSError, ValueError) as exc:
-            raise RuntimeError(f"{SERVICE} 返回了无效的安装目录") from exc
+            raise RuntimeError(f"{SERVICE} returned an invalid installation directory") from exc
         if actual != expected:
             raise RuntimeError(
-                f"端口 8189 已由另一套 YuE2 占用：{actual}；当前节点目录是 {expected}。"
-                "请停止另一套服务，或显式设置 YUE2_SERVICE"
+                f"Port 8189 is already used by another YuE2 installation: {actual}; current node directory is {expected}. "
+                "Stop the other service or set YUE2_SERVICE explicitly"
             )
     return health
 
@@ -68,14 +68,14 @@ def ensure_service(timeout=30):
         health = request("/api/health", timeout=2)
     except Exception as exc:
         if SERVICE_CONFIGURED:
-            raise RuntimeError(f"无法连接显式配置的 YuE2 服务 {SERVICE}") from exc
+            raise RuntimeError(f"Cannot connect to the explicitly configured YuE2 service {SERVICE}") from exc
     else:
         return validate_health(health)
 
     root = find_root()
     python = root / "runtime" / "python.exe"
     if not python.is_file():
-        raise RuntimeError(f"YuE2 运行时未安装，请运行 {root / '安装运行环境.bat'}")
+        raise RuntimeError(f"YuE2 runtime is not installed; run the runtime installer (安装运行环境.bat) in {root}")
     environment = os.environ.copy()
     environment.update({"YUE2_HOME": str(root), "PYTHONUTF8": "1", "PYTHONIOENCODING": "utf-8",
                         "PLAYWRIGHT_BROWSERS_PATH": str(root / "runtime" / "playwright")})
@@ -94,7 +94,7 @@ def ensure_service(timeout=30):
             time.sleep(0.4)
             continue
         return validate_health(health)
-    raise RuntimeError("YuE2 服务启动超时，请查看 logs/service.stderr.log")
+    raise RuntimeError("YuE2 service startup timed out; check logs/service.stderr.log")
 
 
 def submit(kind: str, payload: dict) -> dict:
